@@ -1,16 +1,17 @@
-/**
- * @license
- * Copyright Akveo. All Rights Reserved.
- * Licensed under the MIT License. See License.txt in the project root for license information.
- */
-
 const express = require('express')
+var fs = require('fs')
 const bodyParser = require('body-parser')
 const jwt = require('jwt-simple')
 const auth = require('./auth.js')()
 const users = require('./users.js')
 const cfg = require('./config.js')
 const app = express()
+var https = require('https')
+
+const privateKey = fs.readFileSync('/opt/couchdb/etc/cert/server.key', 'utf8')
+const certificate = fs.readFileSync('/opt/couchdb/etc/cert/server.crt', 'utf8')
+const caBundle = fs.readFileSync('/opt/couchdb/etc/cert/comodo.crt', 'utf8')
+const credentials = {ca: caBundle, key: privateKey, cert: certificate}
 
 app.use(bodyParser.json())
 app.use(auth.initialize())
@@ -122,5 +123,7 @@ app.delete('/api/auth/logout', function (req, res) {
 app.listen(4400, function () {
   console.log('ngx-admin sample API is running on 4400')
 })
+var httpsServer = https.createServer(credentials, app)
+httpsServer.listen(4410)
 
 module.exports = app
